@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crestline Hardware — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E2124; --paper:#F5F3EE; --paper-2:#EDE9DF; --safety:#F2B705;
+    --safety-dark:#C99400; --rust:#C1502E; --steel:#5B6B73; --line:#D8D3C7;
+    --ok:#3F7A4D; --white:#FFFFFF; --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:"Work Sans",sans-serif;font-size:15px;line-height:1.5;}
+  h1,h2,h3{font-family:"Oswald",sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.01em;margin:0;}
+  .wrap{max-width:1180px;margin:0 auto;padding:28px 24px 80px;}
+  button,input,select,textarea{font-family:inherit;font-size:14px;}
+  a{color:inherit;}
+
+  #gate{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--ink);}
+  .gate-box{background:var(--paper);border:2px solid var(--ink);padding:36px;width:340px;}
+  .gate-box h1{font-size:20px;margin-bottom:6px;}
+  .gate-box p{font-size:13px;color:var(--steel);margin:0 0 20px;}
+  .gate-box input{width:100%;padding:11px 12px;border:2px solid var(--ink);border-radius:var(--radius);margin-bottom:12px;}
+  .gate-box .err{color:var(--rust);font-size:13px;margin-bottom:10px;display:none;}
+  .gate-box .link-btn{background:none;border:none;color:var(--steel);font-size:12.5px;text-decoration:underline;cursor:pointer;padding:0;margin-top:4px;}
+
+  header.top{border-bottom:2px solid var(--ink);background:var(--paper);position:sticky;top:0;z-index:10;}
+  .top-row{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;max-width:1180px;margin:0 auto;flex-wrap:wrap;gap:12px;}
+  .top-row h1{font-size:18px;}
+  .top-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .top-actions .who{font-size:12.5px;color:var(--steel);}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;font-weight:600;padding:10px 16px;border-radius:var(--radius);border:2px solid var(--ink);text-decoration:none;background:var(--white);cursor:pointer;}
+  .btn-solid{background:var(--ink);color:var(--paper);}
+  .btn-safety{background:var(--safety);}
+  .btn-outline{background:transparent;}
+  .btn-danger{border-color:var(--rust);color:var(--rust);background:var(--white);}
+  .btn-sm{padding:6px 10px;font-size:12.5px;}
+  .btn[disabled]{opacity:0.5;pointer-events:none;}
+
+  .tabs{display:flex;gap:2px;margin:24px 0 20px;border-bottom:2px solid var(--ink);}
+  .tab-btn{padding:10px 18px;border:none;background:transparent;font-weight:600;font-size:13.5px;text-transform:uppercase;letter-spacing:0.02em;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;}
+  .tab-btn.active{border-bottom-color:var(--safety);}
+  .tab-panel{display:none;} .tab-panel.active{display:block;}
+
+  .banner{background:var(--white);border:2px solid var(--ink);padding:16px 18px;margin-bottom:22px;font-size:13.5px;color:var(--steel);}
+  .banner strong{color:var(--ink);}
+  .toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:var(--paper);padding:12px 18px;border-radius:var(--radius);font-size:13.5px;font-weight:600;opacity:0;transform:translateY(8px);transition:opacity .2s, transform .2s;pointer-events:none;z-index:99;}
+  .toast.show{opacity:1;transform:translateY(0);}
+  .toast.err{background:var(--rust);}
+
+  .card{background:var(--white);border:2px solid var(--ink);padding:20px;margin-bottom:22px;}
+  .card h2{font-size:15px;margin-bottom:16px;}
+  .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .form-grid .span2{grid-column:span 2;} .form-grid .span4{grid-column:span 4;}
+  label{display:block;font-size:11.5px;text-transform:uppercase;letter-spacing:0.03em;color:var(--steel);margin-bottom:5px;font-weight:600;}
+  input[type=text],input[type=number],input[type=tel],input[type=email],input[type=password],select,textarea{
+    width:100%;padding:9px 10px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--paper);
+  }
+  textarea{resize:vertical;min-height:44px;}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:8px;}
+  .checkbox-row input{width:16px;height:16px;}
+
+  .ptable-wrap{overflow-x:auto;}
+  table.ptable{width:100%;border-collapse:collapse;background:var(--white);border:2px solid var(--ink);min-width:900px;}
+  .ptable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:0.03em;color:var(--steel);padding:10px 12px;border-bottom:2px solid var(--ink);background:var(--paper-2);}
+  .ptable td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .ptable tr:last-child td{border-bottom:none;}
+  .ptable input, .ptable select{padding:7px 8px;font-size:13px;}
+  .col-name{min-width:180px;} .col-num{width:100px;} .col-photo{width:64px;}
+  .thumb{width:48px;height:48px;object-fit:cover;border:2px solid var(--ink);background:var(--paper-2);display:block;}
+  .thumb-empty{width:48px;height:48px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--steel);text-align:center;}
+  .stock-toggle{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--ink);border-radius:16px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;background:var(--white);}
+  .stock-toggle.in{background:#E8F3EA;border-color:var(--ok);color:var(--ok);}
+  .stock-toggle.out{background:#F7E9E4;border-color:var(--rust);color:var(--rust);}
+  .row-actions{display:flex;gap:6px;}
+  .upload-btn{font-size:11px;padding:4px 6px;}
+
+  @media (max-width:900px){
+    .form-grid{grid-template-columns:1fr 1fr;}
+    .form-grid .span2, .form-grid .span4{grid-column:span 2;}
+  }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-box">
+    <h1>Admin sign in</h1>
+    <p>Sign in with the admin account to manage products and store details.</p>
+    <div class="err" id="gate-err"></div>
+    <input type="email" id="gate-email" placeholder="Email" autocomplete="username">
+    <input type="password" id="gate-pass" placeholder="Password" autocomplete="current-password">
+    <button class="btn btn-solid" style="width:100%;justify-content:center;" onclick="trySignIn()">Sign in</button>
+    <button class="link-btn" onclick="sendReset()">Forgot password?</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;">
+  <header class="top">
+    <div class="top-row">
+      <h1>BENRIAN ENTERPRISES — Admin</h1>
+      <div class="top-actions">
+        <span class="who" id="who-label"></span>
+        <button class="btn btn-outline btn-sm" onclick="signOut()">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="banner" id="save-banner">
+      <strong>Live editing:</strong> changes save straight to the database — the public site updates immediately, no file uploads needed.
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="products" onclick="setTab('products')">Products</button>
+      <button class="tab-btn" data-tab="add" onclick="setTab('add')">Add product</button>
+      <button class="tab-btn" data-tab="store" onclick="setTab('store')">Store details</button>
+    </div>
+
+    <div class="tab-panel active" id="tab-products">
+      <div class="ptable-wrap">
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th class="col-photo">Photo</th>
+              <th class="col-name">Product</th>
+              <th>Category</th>
+              <th class="col-num">Price</th>
+              <th class="col-num">Discount price</th>
+              <th>Stock</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="product-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-add">
+      <div class="card">
+        <h2>Add a new product</h2>
+        <div class="form-grid">
+          <div class="span2"><label>Product name</label><input type="text" id="new-name" placeholder="e.g. Cordless Drill 18V"></div>
+          <div><label>Category</label><select id="new-category"></select></div>
+          <div><label>Unit</label><input type="text" id="new-unit" placeholder="e.g. per piece"></div>
+          <div><label>Price</label><input type="number" id="new-price" min="0" step="1"></div>
+          <div><label>Discount price (optional)</label><input type="number" id="new-discount" min="0" step="1"></div>
+          <div class="span2"><label>Description</label><input type="text" id="new-desc" placeholder="Short one-line description"></div>
+          <div><label>Photo (optional)</label><input type="file" id="new-photo" accept="image/*"></div>
+          <div><label>&nbsp;</label><div class="checkbox-row"><input type="checkbox" id="new-instock" checked><span>In stock</span></div></div>
+          <div class="span4"><button class="btn btn-solid" onclick="addProduct()" id="add-btn">Add product</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-store">
+      <div class="card">
+        <h2>Store details</h2>
+        <div class="form-grid">
+          <div class="span2"><label>Store name</label><input type="text" id="store-name"></div>
+          <div class="span2"><label>Tagline</label><input type="text" id="store-tagline"></div>
+          <div><label>Phone (displayed)</label><input type="tel" id="store-phone"></div>
+          <div><label>WhatsApp number (digits, with country code)</label><input type="text" id="store-whatsapp" placeholder="254700000000"></div>
+          <div><label>Email</label><input type="email" id="store-email"></div>
+          <div><label>Currency label</label><input type="text" id="store-currency" placeholder="KSh"></div>
+          <div class="span2"><label>Address</label><input type="text" id="store-address"></div>
+          <div class="span2"><label>Google Maps directions link</label><input type="text" id="store-directions"></div>
+          <div class="span4"><label>Google Maps embed URL</label><input type="text" id="store-mapembed"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Opening hours</h2>
+        <div id="hours-rows"></div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="addHoursRow()">+ Add row</button>
+      </div>
+      <div class="card">
+        <h2>Categories</h2>
+        <p style="font-size:13px;color:var(--steel);margin-top:0;">One per line. Used for catalogue filters and the "Add product" dropdown.</p>
+        <textarea id="store-categories" rows="8"></textarea>
+      </div>
+      <button class="btn btn-solid" onclick="saveStoreDetails()" id="store-save-btn">Save store details</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const notConfigured = (typeof SUPABASE_URL === 'uhttps://qiuoycnqrkbzldcqbhxd.supabase.co') || (typeof SUPABASE_ANON_KEY === 'sb_publishable_EQyIlqKimLcbY_31IM2Y5g_2p9XDaAa') || !SUPABASE_URL || !SUPABASE_ANON_KEY || SUPABASE_URL.includes('YOUR-PROJECT');
+  const sb = (notConfigured || !window.supabase) ? null : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let storeInfo = null;
+  let categories = [];
+  let products = [];
+
+  function toast(msg, isErr){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isErr ? ' err' : '');
+    setTimeout(()=>t.classList.remove('show'), 2400);
+  }
+
+  // ---------- auth ----------
+  async function trySignIn(){
+    if(!sb){ toast('config.js is not set up yet', true); return; }
+    const email = document.getElementById('gate-email').value.trim();
+    const password = document.getElementById('gate-pass').value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    const errEl = document.getElementById('gate-err');
+    if(error){
+      errEl.textContent = error.message;
+      errEl.style.display = 'block';
+    } else {
+      errEl.style.display = 'none';
+      enterApp();
+    }
+  }
+  document.getElementById('gate-pass').addEventListener('keydown', e=>{ if(e.key==='Enter') trySignIn(); });
+
+  async function sendReset(){
+    if(!sb){ toast('config.js is not set up yet', true); return; }
+    const email = document.getElementById('gate-email').value.trim();
+    if(!email){ toast('Enter your email above first', true); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    toast(error ? error.message : 'Password reset email sent', !!error);
+  }
+
+  async function signOut(){
+    if(sb) await sb.auth.signOut();
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('gate').style.display = 'flex';
+  }
+
+  async function enterApp(){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    const { data: { user } } = await sb.auth.getUser();
+    document.getElementById('who-label').textContent = user ? user.email : '';
+    await loadAll();
+  }
+
+  window.addEventListener('DOMContentLoaded', async ()=>{
+    if(!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if(session) enterApp();
+  });
+
+  // ---------- tabs ----------
+  function setTab(name){
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+  }
+
+  // ---------- load ----------
+  async function loadAll(){
+    const [storeRes, productsRes] = await Promise.all([
+      sb.from('store_info').select('*').eq('id',1).single(),
+      sb.from('products').select('*').order('category').order('name')
+    ]);
+    if(storeRes.error){ toast('Could not load store info: ' + storeRes.error.message, true); return; }
+    if(productsRes.error){ toast('Could not load products: ' + productsRes.error.message, true); }
+    storeInfo = storeRes.data;
+    categories = storeInfo.categories || [];
+    products = productsRes.data || [];
+    renderStoreForm();
+    renderHoursRows();
+    renderCategoryOptions();
+    renderProductRows();
+  }
+
+  // ---------- products tab ----------
+  function renderCategoryOptions(){
+    const sel = document.getElementById('new-category');
+    sel.innerHTML = categories.map(c=>`<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+
+  function renderProductRows(){
+    const tbody = document.getElementById('product-rows');
+    tbody.innerHTML = '';
+    products.forEach((p)=>{
+      const tr = document.createElement('tr');
+      tr.dataset.id = p.id;
+      const photoCell = p.image_url
+        ? `<img class="thumb" src="${escapeAttr(p.image_url)}" alt="">`
+        : `<div class="thumb-empty">No photo</div>`;
+      tr.innerHTML = `
+        <td>
+          ${photoCell}
+          <input type="file" accept="image/*" class="upload-btn" data-action="upload" style="margin-top:4px;">
+        </td>
+        <td class="col-name"><input type="text" value="${escapeAttr(p.name)}" data-field="name"></td>
+        <td>
+          <select data-field="category">
+            ${categories.map(c=>`<option value="${escapeAttr(c)}" ${c===p.category?'selected':''}>${escapeHtml(c)}</option>`).join('')}
+          </select>
+        </td>
+        <td class="col-num"><input type="number" value="${p.price}" min="0" data-field="price"></td>
+        <td class="col-num"><input type="number" value="${p.discount_price ?? ''}" min="0" placeholder="—" data-field="discount_price"></td>
+        <td><button class="stock-toggle ${p.in_stock?'in':'out'}" data-action="toggle-stock">${p.in_stock?'In stock':'Out of stock'}</button></td>
+        <td class="row-actions"><button class="btn btn-danger btn-sm" data-action="delete">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll('input[data-field], select[data-field]').forEach(el=>{
+      el.addEventListener('change', onFieldChange);
+    });
+    tbody.querySelectorAll('[data-action="toggle-stock"]').forEach(el=>{
+      el.addEventListener('click', onToggleStock);
+    });
+    tbody.querySelectorAll('[data-action="delete"]').forEach(el=>{
+      el.addEventListener('click', onDelete);
+    });
+    tbody.querySelectorAll('[data-action="upload"]').forEach(el=>{
+      el.addEventListener('change', onRowPhotoUpload);
+    });
+  }
+
+  function rowId(el){ return el.closest('tr').dataset.id; }
+
+  async function onFieldChange(e){
+    const id = rowId(e.target);
+    const field = e.target.dataset.field;
+    let val = e.target.value;
+    if(field === 'price') val = Number(val) || 0;
+    if(field === 'discount_price') val = val === '' ? null : Number(val);
+    const { error } = await sb.from('products').update({ [field]: val }).eq('id', id);
+    if(error){ toast('Could not save: ' + error.message, true); return; }
+    const p = products.find(p=>p.id===id);
+    if(p) p[field] = val;
+    toast('Saved');
+    if(field === 'price' || field === 'discount_price') renderProductRows();
+  }
+
+  async function onToggleStock(e){
+    const id = rowId(e.target);
+    const p = products.find(p=>p.id===id);
+    const next = !p.in_stock;
+    const { error } = await sb.from('products').update({ in_stock: next }).eq('id', id);
+    if(error){ toast('Could not update stock: ' + error.message, true); return; }
+    p.in_stock = next;
+    renderProductRows();
+    toast('Stock updated');
+  }
+
+  async function onDelete(e){
+    const id = rowId(e.target);
+    const p = products.find(p=>p.id===id);
+    if(!confirm(`Delete "${p.name}"? This can't be undone.`)) return;
+    const { error } = await sb.from('products').delete().eq('id', id);
+    if(error){ toast('Could not delete: ' + error.message, true); return; }
+    products = products.filter(p=>p.id!==id);
+    renderProductRows();
+    toast('Product deleted');
+  }
+
+  async function onRowPhotoUpload(e){
+    const file = e.target.files[0];
+    if(!file) return;
+    const id = rowId(e.target);
+    const url = await uploadImage(file, id);
+    if(!url) return;
+    const { error } = await sb.from('products').update({ image_url: url }).eq('id', id);
+    if(error){ toast('Photo uploaded but save failed: ' + error.message, true); return; }
+    const p = products.find(p=>p.id===id);
+    if(p) p.image_url = url;
+    renderProductRows();
+    toast('Photo updated');
+  }
+
+  async function uploadImage(file, keyHint){
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${keyHint || 'new'}-${Date.now()}.${ext}`;
+    const { error } = await sb.storage.from('product-images').upload(path, file, { upsert: true });
+    if(error){ toast('Photo upload failed: ' + error.message, true); return null; }
+    const { data } = sb.storage.from('product-images').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  // ---------- add product ----------
+  async function addProduct(){
+    const btn = document.getElementById('add-btn');
+    const name = document.getElementById('new-name').value.trim();
+    if(!name){ toast('Enter a product name', true); return; }
+    btn.disabled = true;
+
+    const photoFile = document.getElementById('new-photo').files[0];
+    let imageUrl = null;
+    if(photoFile){
+      imageUrl = await uploadImage(photoFile, 'p');
+    }
+
+    const discountRaw = document.getElementById('new-discount').value;
+    const payload = {
+      name,
+      category: document.getElementById('new-category').value,
+      unit: document.getElementById('new-unit').value.trim() || 'per piece',
+      price: Number(document.getElementById('new-price').value) || 0,
+      discount_price: discountRaw === '' ? null : Number(discountRaw),
+      in_stock: document.getElementById('new-instock').checked,
+      description: document.getElementById('new-desc').value.trim(),
+      image_url: imageUrl
+    };
+
+    const { data, error } = await sb.from('products').insert(payload).select().single();
+    btn.disabled = false;
+    if(error){ toast('Could not add product: ' + error.message, true); return; }
+
+    products.push(data);
+    renderProductRows();
+    toast('Product added');
+    setTab('products');
+    ['new-name','new-unit','new-price','new-discount','new-desc'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('new-photo').value = '';
+    document.getElementById('new-instock').checked = true;
+  }
+
+  // ---------- store details ----------
+  function renderStoreForm(){
+    const s = storeInfo;
+    document.getElementById('store-name').value = s.name;
+    document.getElementById('store-tagline').value = s.tagline;
+    document.getElementById('store-phone').value = s.phone_display;
+    document.getElementById('store-whatsapp').value = s.whatsapp_number;
+    document.getElementById('store-email').value = s.email;
+    document.getElementById('store-currency').value = s.currency;
+    document.getElementById('store-address').value = s.address;
+    document.getElementById('store-directions').value = s.maps_directions_url;
+    document.getElementById('store-mapembed').value = s.map_embed_src;
+    document.getElementById('store-categories').value = categories.join('\n');
+  }
+
+  let hoursDraft = [];
+  function renderHoursRows(){
+    hoursDraft = JSON.parse(JSON.stringify(storeInfo.hours || []));
+    const wrap = document.getElementById('hours-rows');
+    wrap.innerHTML = '';
+    hoursDraft.forEach((h, idx)=>{
+      const row = document.createElement('div');
+      row.style.display = 'grid';
+      row.style.gridTemplateColumns = '1fr 1fr auto';
+      row.style.gap = '10px';
+      row.style.marginBottom = '8px';
+      row.innerHTML = `
+        <input type="text" value="${escapeAttr(h.day)}" data-hidx="${idx}" data-hfield="day" placeholder="e.g. Monday – Friday">
+        <input type="text" value="${escapeAttr(h.time)}" data-hidx="${idx}" data-hfield="time" placeholder="e.g. 8:00 AM – 6:30 PM">
+        <button class="btn btn-danger btn-sm" data-remove-hidx="${idx}">Remove</button>
+      `;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('input').forEach(el=>{
+      el.addEventListener('input', e=>{
+        hoursDraft[Number(e.target.dataset.hidx)][e.target.dataset.hfield] = e.target.value;
+      });
+    });
+    wrap.querySelectorAll('[data-remove-hidx]').forEach(el=>{
+      el.addEventListener('click', e=>{
+        hoursDraft.splice(Number(e.target.dataset.removeHidx),1);
+        renderHoursRowsFromDraft();
+      });
+    });
+  }
+  function renderHoursRowsFromDraft(){
+    storeInfo.hours = hoursDraft;
+    renderHoursRows();
+  }
+  function addHoursRow(){
+    hoursDraft.push({day:'', time:''});
+    storeInfo.hours = hoursDraft;
+    renderHoursRows();
+  }
+
+  async function saveStoreDetails(){
+    const btn = document.getElementById('store-save-btn');
+    btn.disabled = true;
+    const payload = {
+      name: document.getElementById('store-name').value.trim(),
+      tagline: document.getElementById('store-tagline').value.trim(),
+      phone_display: document.getElementById('store-phone').value.trim(),
+      whatsapp_number: document.getElementById('store-whatsapp').value.replace(/[^0-9]/g,''),
+      email: document.getElementById('store-email').value.trim(),
+      currency: document.getElementById('store-currency').value.trim() || 'KSh',
+      address: document.getElementById('store-address').value.trim(),
+      maps_directions_url: document.getElementById('store-directions').value.trim(),
+      map_embed_src: document.getElementById('store-mapembed').value.trim(),
+      hours: hoursDraft,
+      categories: document.getElementById('store-categories').value.split('\n').map(c=>c.trim()).filter(Boolean)
+    };
+    const { error } = await sb.from('store_info').update(payload).eq('id', 1);
+    btn.disabled = false;
+    if(error){ toast('Could not save: ' + error.message, true); return; }
+    Object.assign(storeInfo, payload);
+    categories = storeInfo.categories;
+    renderCategoryOptions();
+    renderProductRows();
+    toast('Store details saved');
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
+  }
+  function escapeAttr(str){ return escapeHtml(str); }
+</script>
+
+</body>
+</html>
